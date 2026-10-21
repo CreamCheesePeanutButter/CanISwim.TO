@@ -16,7 +16,7 @@ A web app that helps people find out when and where it is safe to swim in Toront
 
 ## 2. Data Sources & APIs
 
-CanISwim.TO will use four external APIs: Swimsafe, Toronto Beaches Water Quality, Toronto Beaches Observations and Open Meteo.
+CanISwim.TO will use three external APIs: Swimsafe, Toronto Beaches Water Quality, Toronto Beaches Observations.
 
 ### 2.1 Toronto Beaches Water Quality
 
@@ -226,3 +226,44 @@ Below is a comparative analysis of **CanISwim.TO** against existing platforms in
 ---
 
 ## 4. Scaled Feature Plan & Team Responsibilities
+
+### Pages Design and Wireframes
+
+The app will have 3 main pages:
+
+1. Homepage (show trending beaches and sites: beaches have most stars, beaches not safe to swim...)
+
+   ![alt text](image-2.png)
+
+2. The map page
+
+   ![alt text](image-1.png)
+
+3. The search page with available beaches and pool grouping base on categories(such as pool indoor - pool outdoor -beach)
+
+   ![alt text](image-3.png)
+
+> **Note:** The wireframe will be more descriptive in pixel if you view it through our Figma design - here is the [link](https://www.figma.com/design/EPUdl55Q3H2pBzKJZe1R86/CanISwim.TO?node-id=7-3&t=aHOKI908mauuJphn-1)
+
+---
+
+### Architecture & Feature Assignments (Vertical Slices)
+
+Each team member is responsible for a dedicated, end-to-end vertical slice of the application, ensuring a balanced and credible project scope.
+
+#### UI & Frontend Design
+
+- **Main Page (Vertical Slice Core)** – Developed by @An Le
+- **Map Page (Vertical Slice Core)** – Developed by @Adam
+- **Search Page (Vertical Slice Core)** – Developed by @Nabih
+
+#### Backend & API Integration
+
+- **Swimsafe API Handling** – Implemented by @An Le
+- **Toronto Beaches Water Quality API** – Implemented by @Adam
+- **Toronto Beaches Observations API** – Implemented by @Nabih
+
+#### Infrastructure & Database Baseline
+
+- **Database System Setting** – Configured by @An Le
+- **Hosting & Deployment** – Managed by @An Le
