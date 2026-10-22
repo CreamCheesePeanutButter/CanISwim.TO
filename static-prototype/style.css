@@ -1,0 +1,203 @@
+/* Reset margins and paddings to allow full-page viewports */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+html {
+  width: 100%;
+  height: 100%;
+  font-family: "Inter", sans-serif;
+  background-color: #f8fafc;
+}
+.topbar {
+  align-items: center;
+  position: absolute;
+  left: 491px;
+  right: 0;
+  top: 0;
+  background-color: rgb(110, 110, 110);
+  height: 100px;
+}
+
+/* Sidebar scaled to occupy a responsive fraction of the viewport height */
+.sidebar {
+  width: 491px;
+  height: 100vh; /* Fills full viewport height */
+  overflow-y: auto;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #bcc1c0;
+}
+
+/* Responsive inner padding replacing fixed absolute offsets */
+.content-container {
+  width: 100%;
+  padding: 3rem 3rem; /* 48px scaling alternative */
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1.5rem; /* 24px scaling alternative */
+}
+
+/* Header Section */
+.header {
+  align-self: stretch;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.75rem;
+  display: inline-flex;
+}
+
+.icon-container {
+  width: 40px;
+  height: 40px;
+  background: #0f766e;
+  border-radius: 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
+.icon-wrapper {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-shape {
+  width: 13.33px;
+  height: 16.67px;
+  left: 3.33px;
+  top: 1.67px;
+  position: absolute;
+  outline: 2px white solid;
+  outline-offset: -1px;
+}
+
+.title-container {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 2px;
+  display: inline-flex;
+}
+
+.main-title {
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  word-wrap: break-word;
+}
+
+.sub-title {
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  word-wrap: break-word;
+}
+
+/* Card Elements */
+.card {
+  align-self: stretch;
+  padding: 1.25rem;
+  background: white;
+  box-shadow: 0px 8px 24px rgba(15, 23, 42, 0.04);
+  border-radius: 20px;
+  outline: 1px #d7e8ea solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1rem;
+  display: flex;
+}
+
+.card-header {
+  align-self: stretch;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.badge {
+  padding: 6px 10px;
+  background: #e8f7f8;
+  border-radius: 999px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+
+.badge-icon-wrapper {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-icon {
+  width: 10.5px;
+  height: 10.5px;
+  left: 1.75px;
+  top: 1.75px;
+  position: absolute;
+  outline: 2px #0f766e solid;
+  outline-offset: -1px;
+}
+
+.badge-text {
+  color: #0f766e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  word-wrap: break-word;
+}
+
+.card-type {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 400;
+  word-wrap: break-word;
+}
+
+.image-placeholder {
+  align-self: stretch;
+  height: 220px;
+  background: #e2e8f0;
+  border-radius: 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.image-text {
+  color: #94a3b8;
+  font-size: 2.5rem;
+  font-weight: 700;
+  word-wrap: break-word;
+}
+
+.card-description {
+  align-self: stretch;
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+  word-wrap: break-word;
+}
+
+.stats-title {
+  align-self: stretch;
+  color: #0f172a;
+  font-size: 1.75rem;
+  font-weight: 700;
+  word-wrap: break-word;
+}
