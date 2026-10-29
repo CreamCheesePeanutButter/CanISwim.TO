@@ -17,6 +17,7 @@ p {
   line-height: 1.5;
   text-align: center;
 }
-.main {
+main {
   width: 100%;
+  padding: 0;
 }
