@@ -6,6 +6,7 @@ import { MainLayout } from "./layout/MainLayout.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { MapPage } from "./pages/MapPage.tsx";
 import { NotFoundPage } from "./pages/NotFoundPage.tsx";
+import { MainPage } from "./pages/MainPage.tsx";
 
 const router = createBrowserRouter([
   {
@@ -15,7 +16,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <MapPage />, // TODO: YOUR MAIN PAGE GOES HERE.
+        element: <MainPage />, // TODO: YOUR MAIN PAGE GOES HERE. - DONEE
       },
       {
         path: "map",
