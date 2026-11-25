@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listBeaches } from "../controllers/beachController.js";
+import { listBeaches } from "../controllers/beachController.ts";
 
 const router = Router();
 

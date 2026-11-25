@@ -1,21 +1,27 @@
-import { AppError } from "../utils/AppError.js";
-import { BeachDTO } from "../DTOs/beachDTO.js";
-import { getBeachesResource } from "../models/beachesModel.js";
+import type { BeachDTO } from "../DTOs/beachDTO.ts";
 
-export async function getSingleBeachListWithLastestInspection() {
-  const beachesDTO = await getBeachesResource();
-  const map = new Map();
+export function getSingleBeachListWithLastestInspection(
+  beachesDTO: BeachDTO[],
+): BeachDTO[] {
+  const latestByBeach = new Map<string, BeachDTO>();
+
   for (const beach of beachesDTO) {
-    if (!map.has(beach.facilityName)) {
-      map.set(beach.facilityName, beach);
-    } else {
-      if (
-        new Date(beach.lastInspectionDate) >
-        new Date(map.get(beach.facilityName).lastInspectionDate)
-      ) {
-        map.set(beach.facilityName, beach);
-      }
+    const existing = latestByBeach.get(beach.beachName);
+
+    if (!existing) {
+      latestByBeach.set(beach.beachName, beach);
+    } else if (
+      new Date(beach.collectionDate).getTime() >
+      new Date(existing.collectionDate).getTime()
+    ) {
+      latestByBeach.set(beach.beachName, beach);
     }
   }
-  return Array.from(map.values());
+
+  return Array.from(latestByBeach.values());
 }
+
+// Export as an object if your controller calls `beachService.getSingleBeachListWithLastestInspection(...)`
+export const beachService = {
+  getSingleBeachListWithLastestInspection,
+};

@@ -31,7 +31,7 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("http://localhost:3000/beaches", {
+        const response = await fetch("http://localhost:3000/pools", {
           signal: controller.signal,
         });
 
@@ -70,6 +70,7 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
               : (beach.geometry as unknown as Geometry);
 
           // Separate geometry from the rest of the beach properties
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { geometry: _geometry, ...properties } = beach;
 
           return {

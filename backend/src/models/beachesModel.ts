@@ -1,5 +1,5 @@
 import { BeachDTO } from "../DTOs/beachDTO";
-const PACKAGE_ID = "e36df4b9-f772-49ab-a87b-f90b869b7a44";
+const PACKAGE_ID = "92b0de8f-1ada-44a7-84cf-adc04868e990";
 const BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action";
 
 interface CkanResource {

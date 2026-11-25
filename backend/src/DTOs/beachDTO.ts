@@ -1,13 +1,9 @@
 export interface BeachDTO {
   id: number;
-  facilityName: string;
-  address: string;
-  type: string;
-  inspectionStatus: string;
-  lastInspectionDate: string;
-  observation: string;
-  infCategory: string;
-  defectDescription: string;
-  actionDescription: string;
+  beachId: number;
+  beachName: string;
+  siteName: string;
+  collectionDate: string;
+  eColi: string;
   geometry: JSON;
 }

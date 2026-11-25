@@ -4,7 +4,8 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 
 //Import routes
-import beachRoutes from "./routes/beachRoutes.ts";
+import poolRoutes from "./routes/poolRoutes";
+import beachRoutes from "./routes/beachRoutes";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 // 3. API Routes
 // app.use('/api/v1/users', userRoutes);
+app.use("/pools", poolRoutes);
 app.use("/beaches", beachRoutes);
 
 // 4. Centralized Error-Handling Middleware
