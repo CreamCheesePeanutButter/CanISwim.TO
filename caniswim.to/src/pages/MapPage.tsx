@@ -1,84 +1,87 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Layer } from "leaflet";
-import type { Feature, Geometry } from "geojson";
+import type { Feature, FeatureCollection, Geometry } from "geojson";
 import "leaflet/dist/leaflet.css";
 import type { LatLngExpression } from "leaflet";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 
-// import types
+//Import component
 import type { SwimSafeProperties } from "../types/SwimSafeProperties";
-// import image
-import pnutAvt from "../assets/dummy/pnutAvt.png";
+import type { BeachDTO } from "../DTOs/BeachDTO";
 import { FacilityCard } from "../components/FacilitiyCard";
-// import swimSafeData from "../assets/dummy/map/Swimsafe-4326.json";
-
-// 2. Map Setup with Mock Data
-const swimSafeData = {
-  type: "FeatureCollection" as const,
-  name: "Swimsafe-4326",
-  crs: {
-    type: "name",
-    properties: { name: "urn:ogc:def:crs:OGC:1.3:CRS84" },
-  },
-  features: [
-    {
-      type: "Feature" as const,
-      properties: {
-        _id: 1,
-        unique_id: "0543c99e46f9846674f4e7767d2c0903",
-        facilityName: "YORK RECREATION CENTRE (POOL A)",
-        address: "115 BLACK CREEK DR",
-        estName: "YORK RECREATION CENTRE LANE POOL",
-        type: "Indoor Pool",
-        insStatus: "Pass",
-        insDate: "2026-06-04",
-        observation:
-          "No infractions were observed under the SwimSafe Regulation during an inspection.",
-        infCategory: "None",
-        defDesc: "None",
-        infType: "None",
-        actionDesc: "None",
-      },
-      geometry: {
-        type: "MultiPoint" as const,
-        coordinates: [[-79.48129, 43.68614]],
-      },
-    },
-    {
-      type: "Feature" as const,
-      properties: {
-        _id: 3,
-        unique_id: "de48f9e93182e516171d73184d4e6bb7",
-        facilityName: "YORK RECREATION CENTRE (SPA B)",
-        address: "115 BLACK CREEK DR",
-        estName: "YORK RECREATION CENTRE SPA",
-        type: "Indoor Pool",
-        insStatus: "Fail",
-        insDate: "2026-01-27",
-        observation:
-          "One or more minor infractions were observed under the SwimSafe Regulation during an inspection.",
-        infCategory: "4. MAINTENANCE/PROVISION OF POOL/SPA, DECK AND EQUIPMENT",
-        defDesc:
-          "Fail to ensure perimeter of pool deck clearly delineated where contiguous area may be confused with pool deck. Section 6 (6) (e)",
-        infType: "M - Minor",
-        actionDesc: "Notice to Comply",
-      },
-      geometry: {
-        type: "MultiPoint" as const,
-        coordinates: [[-79.48429, 43.68814]],
-      },
-    },
-  ],
-};
+import ShorelineMapHeader from "../components/MapHeader";
 
 interface SwimSafeMapProps {
-  // latestGeoJsonData: FeatureCollection<Geometry, SwimSafeProperties>;
   onSelectFeature: (properties: SwimSafeProperties) => void;
 }
 
 export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
+  const [beaches, setBeaches] = useState<BeachDTO[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const mapCenter: LatLngExpression = [43.68614, -79.48129];
   const zoomLevel = 15;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchBeaches() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch("http://localhost:3000/beaches", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Server error: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        const data: BeachDTO[] = await response.json();
+        setBeaches(data);
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          setError(err.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBeaches();
+    return () => controller.abort();
+  }, []);
+
+  // Convert BeachDTO[] into a valid GeoJSON FeatureCollection for Leaflet
+  const geoJsonData = useMemo<FeatureCollection<Geometry, SwimSafeProperties>>(
+    () => ({
+      type: "FeatureCollection",
+      features: beaches
+        .filter((beach) => Boolean(beach.geometry))
+        .map((beach) => {
+          // Parse geometry if Toronto Open Data returned it as a JSON string
+          const parsedGeometry: Geometry =
+            typeof beach.geometry === "string"
+              ? (JSON.parse(beach.geometry) as Geometry)
+              : (beach.geometry as unknown as Geometry);
+
+          // Separate geometry from the rest of the beach properties
+          const { geometry: _geometry, ...properties } = beach;
+
+          return {
+            type: "Feature",
+            id: beach.id,
+            geometry: parsedGeometry,
+            properties: properties as unknown as SwimSafeProperties,
+          };
+        }),
+    }),
+    [beaches],
+  );
 
   const onEachFeature = (
     feature: Feature<Geometry, SwimSafeProperties>,
@@ -93,8 +96,22 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
     });
   };
 
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-red-700 p-4">
+        Failed to load map data: {error}
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-full rounded-2xl overflow-hidden shadow-inner border border-gray-200">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-inner border border-gray-200">
+      {loading && (
+        <div className="absolute top-3 right-3 z-1000 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 shadow">
+          Loading beaches...
+        </div>
+      )}
+
       <MapContainer
         center={mapCenter}
         zoom={zoomLevel}
@@ -104,29 +121,30 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
           attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <GeoJSON
-          key="swimsafe-layer"
-          data={swimSafeData}
-          onEachFeature={onEachFeature}
-        />
+
+        {geoJsonData.features.length > 0 && (
+          <GeoJSON
+            key={`swimsafe-layer-${geoJsonData.features.length}`}
+            data={geoJsonData}
+            onEachFeature={onEachFeature}
+          />
+        )}
       </MapContainer>
     </div>
   );
 }
-
-// 3. Layout Integration Wrapper
+// Layout Integration Wrapper
 export function MapPage() {
   const [selectedFacility, setSelectedFacility] =
     useState<SwimSafeProperties | null>(null);
 
   return (
-    <div className="flex gap-4 p-4 min-h-screen bg-gray-50 antialiased">
+    <div className="flex gap-4 p-4 min-h-[100vh] bg-gray-50 antialiased">
       {/* Sidebar Navigation */}
       <div className="w-1/4 bg-white p-4 flex flex-col gap-4 rounded-2xl border border-gray-200 shadow-sm">
         {/* Header Branding */}
         <div className="flex items-center gap-3">
           <div className="bg-emerald-700 p-2 rounded-xl text-white shadow-sm shadow-emerald-200">
-            {/* Icon copy from open Icon */}
             <svg
               xmlns="http://w3.org"
               width="24"
@@ -143,9 +161,7 @@ export function MapPage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900 leading-none">
-              Toronto Map
-            </h2>
+            <h2>Toronto Map</h2>
             <p className="text-xs text-gray-500 mt-1 font-medium">
               SwimSafe Inspection Hub
             </p>
@@ -157,7 +173,7 @@ export function MapPage() {
           <div className="flex justify-between items-center">
             <div className="flex bg-green-100 p-2 rounded gap-2 items-center text-green-800">
               <svg
-                xmlns="http://www.w3.org/2000/svg"
+                xmlns="http://w3.org"
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
@@ -178,17 +194,18 @@ export function MapPage() {
             </span>
           </div>
           <div className="max-w-md mx-auto overflow-hidden rounded-xl shadow-md">
-            <img
+            {/* <img
               className="w-full h-64 object-cover"
               src={pnutAvt}
               alt="Peanut Butter"
-            />
+            /> */}
           </div>
           <div className="mt-2 text-sm text-gray-600">
             Click markers on the map to review historic safety records, minor
             infractions, and compliance statuses.
           </div>
         </div>
+
         {/* Modular Information Card Mounted on Left Side Bar */}
         <div className="flex-1 flex flex-col">
           <FacilityCard data={selectedFacility} />
@@ -196,7 +213,8 @@ export function MapPage() {
       </div>
 
       {/* Primary Map Application Display */}
-      <div className="w-3/4 h-[calc(100vh-2rem)]">
+      <div className="w-3/4 h-[calc(100vh-32px)] flex flex-col gap-4">
+        <ShorelineMapHeader />
         <SwimSafeMap onSelectFeature={setSelectedFacility} />
       </div>
     </div>
