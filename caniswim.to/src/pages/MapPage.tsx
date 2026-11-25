@@ -10,9 +10,10 @@ import type { SwimSafeProperties } from "../types/SwimSafeProperties";
 // import image
 import pnutAvt from "../assets/dummy/pnutAvt.png";
 import { FacilityCard } from "../components/FacilitiyCard";
+import ShorelineMapHeader from "../components/MapHeader";
 // import swimSafeData from "../assets/dummy/map/Swimsafe-4326.json";
 
-// 2. Map Setup with Mock Data
+// Map Setup with Mock Data
 const swimSafeData = {
   type: "FeatureCollection" as const,
   name: "Swimsafe-4326",
@@ -114,13 +115,13 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
   );
 }
 
-// 3. Layout Integration Wrapper
+// Layout Integration Wrapper
 export function MapPage() {
   const [selectedFacility, setSelectedFacility] =
     useState<SwimSafeProperties | null>(null);
 
   return (
-    <div className="flex gap-4 p-4 min-h-screen bg-gray-50 antialiased">
+    <div className="flex gap-4 p-4 min-h-[100vh] bg-gray-50 antialiased">
       {/* Sidebar Navigation */}
       <div className="w-1/4 bg-white p-4 flex flex-col gap-4 rounded-2xl border border-gray-200 shadow-sm">
         {/* Header Branding */}
@@ -143,9 +144,7 @@ export function MapPage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900 leading-none">
-              Toronto Map
-            </h2>
+            <h2>Toronto Map</h2>
             <p className="text-xs text-gray-500 mt-1 font-medium">
               SwimSafe Inspection Hub
             </p>
@@ -196,7 +195,8 @@ export function MapPage() {
       </div>
 
       {/* Primary Map Application Display */}
-      <div className="w-3/4 h-[calc(100vh-2rem)]">
+      <div className="w-3/4 h-[calc(100vh-32px)] flex flex-col gap-4">
+        <ShorelineMapHeader />
         <SwimSafeMap onSelectFeature={setSelectedFacility} />
       </div>
     </div>
