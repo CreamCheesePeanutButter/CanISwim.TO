@@ -1,48 +1,101 @@
+import { useNavigate } from "react-router-dom";
+import type { LocationDTO } from "../DTOs/LocationDTO";
+
 type MarkerCardProps = {
   title: string;
   description: string;
-  type: "active" | "nearby" | "alert" | "info";
+  type: "type" | "active" | "pass" | "info";
+  locationInfo?: LocationDTO;
 };
 
-function MarkerIcon({ type }: { type: MarkerCardProps["type"] }) {
-  if (type === "info") {
-    return (
-      <svg
-        viewBox="0 0 24 24"
-        className="h-3.5 w-3.5 text-teal-600"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 11v5M12 7h.01" />
-      </svg>
-    );
-  }
+type MarkerIconProps = {
+  type: MarkerCardProps["type"];
+  locationInfo?: LocationDTO;
+};
 
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={`h-3.5 w-3.5 ${
-        type === "alert" ? "text-red-600" : "text-blue-700"
-      }`}
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 3 23 21H1L12 3Z" />
-    </svg>
-  );
+function MarkerIcon({ type, locationInfo }: MarkerIconProps) {
+  switch (type) {
+    case "info":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          className="h-3.5 w-3.5 text-teal-600"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5M12 7h.01" />
+        </svg>
+      );
+
+    case "active":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          className="h-3.5 w-3.5 text-amber-500"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="3" fill="currentColor" />
+        </svg>
+      );
+
+    case "pass":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          className={`h-3.5 w-3.5 ${
+            locationInfo?.pass ? "text-emerald-600" : "text-red-600"
+          }`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      );
+
+    case "type":
+    default:
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          className="h-3.5 w-3.5 text-blue-700"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M12 3 23 21H1L12 3Z" />
+        </svg>
+      );
+  }
 }
 
-function MarkerCard({ title, description, type }: MarkerCardProps) {
+function MarkerCard({
+  title,
+  description,
+  type,
+  locationInfo,
+}: MarkerCardProps) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-      <MarkerIcon type={type} />
+      <MarkerIcon type={type} locationInfo={locationInfo} />
 
-      <div className="min-w-0">
-        <h3 className="truncate text-[11px] font-semibold text-slate-800">
-          {title}
-        </h3>
+      <div className="mr-auto min-w-0">
+        <h3 className="text-[11px] font-semibold text-slate-800">{title}</h3>
+
         <p className="truncate text-[10px] text-slate-500">{description}</p>
       </div>
     </div>
@@ -120,15 +173,51 @@ function ActionButton({
   );
 }
 
-export default function ShorelineMapHeader() {
+export interface ShorelineMapHeaderProps {
+  id: number | undefined;
+  title: string;
+  locationType: string;
+  isActive: boolean;
+  pass: string;
+}
+
+export default function ShorelineMapHeader({
+  id,
+  title,
+  locationType,
+  isActive,
+  pass,
+}: ShorelineMapHeaderProps): React.JSX.Element {
+  const navigate = useNavigate();
+
+  const locationInfo: LocationDTO = {
+    id: id ?? 0,
+    name: title,
+    type: locationType,
+    isActive,
+    pass,
+    geometry: null,
+  };
+
+  const handleInfoClick = () => {
+    if (id === undefined) return;
+
+    if (locationType === "Beach") {
+      navigate(`/location/beach/${id}`);
+    } else if (locationType === "Pool") {
+      navigate(`/location/pool/${id}`);
+    }
+  };
+
   return (
-    <section className="w-full border-t-2 border-fuchsia-500 bg-slate-50 px-4 py-7 sm:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <section className="w-full border-t-2 border-green-500 bg-slate-50 px-4 py-7 sm:px-8">
+      <div className="w-full space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="text-left">
             <h1 className="text-xl font-bold tracking-tight text-slate-800">
-              Mississauga–Oakville shoreline
+              {title}
             </h1>
+
             <p className="text-xs text-slate-500">
               Explore beaches along Lake Ontario
             </p>
@@ -143,28 +232,45 @@ export default function ShorelineMapHeader() {
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <MarkerCard
-            title="Active marker"
-            description="Beach location"
+            title="Type"
+            description={locationType}
+            type="type"
+            locationInfo={locationInfo}
+          />
+
+          <MarkerCard
+            title="Active"
+            description={isActive ? "Active" : "Not recorded"}
             type="active"
+            locationInfo={locationInfo}
           />
 
           <MarkerCard
-            title="Nearby points"
-            description="Shoreline location"
-            type="nearby"
+            title="Safe to swim"
+            description={pass ? "Pass" : "Fail"}
+            type="pass"
+            locationInfo={locationInfo}
           />
 
-          <MarkerCard
-            title="Alert marker"
-            description="Highlighted location"
-            type="alert"
-          />
-
-          <MarkerCard
-            title="Info panel"
-            description="Beach stats summary"
-            type="info"
-          />
+          <div
+            onClick={handleInfoClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleInfoClick();
+              }
+            }}
+            className="cursor-pointer"
+          >
+            <MarkerCard
+              title="Info panel"
+              description="Summary"
+              type="info"
+              locationInfo={locationInfo}
+            />
+          </div>
         </div>
       </div>
     </section>

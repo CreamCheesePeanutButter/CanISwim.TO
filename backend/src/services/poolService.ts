@@ -1,16 +1,22 @@
 import { AppError } from "../utils/AppError.ts";
 import { PoolDTO } from "../DTOs/poolDTO.ts";
 import { LocationDTO } from "../DTOs/locationDTO.ts";
+import pino from "pino";
+import Console from "pino-console";
+
+const logger = pino({ level: "info" });
+const console = new Console(logger);
 
 //Get Location
 export function getLocationListWithLastestInspection(
   poolsDTO: PoolDTO[],
 ): LocationDTO[] {
   const pools = getSinglePoolListWithLastestInspection(poolsDTO);
+  console.log(pools);
   const locations: LocationDTO[] = pools.map(
     (pool): LocationDTO => ({
-      id: pool.id,
-      name: pool.facillityName,
+      id: pool._id,
+      name: pool.facilityName,
       type: pool.type,
       isActive: pool.inspectionStatus != null,
       pass: pool.inspectionStatus == "Pass",
@@ -20,6 +26,20 @@ export function getLocationListWithLastestInspection(
 
   return Array.from(locations.values());
 }
+
+// export interface PoolDTO {
+//   id: number;
+//   facilityName: string;
+//   address: string;
+//   type: string;
+//   inspectionStatus: string;
+//   lastInspectionDate: string;
+//   observation: string;
+//   infCategory: string;
+//   defectDescription: string;
+//   actionDescription: string;
+//   geometry: JSON;
+// }
 
 export function getSinglePoolListWithLastestInspection(poolsDTO: PoolDTO[]) {
   const map = new Map();
@@ -43,7 +63,7 @@ export function getPoolByIdWithLatestInspection(
 ) {
   const pools = getSinglePoolListWithLastestInspection(poolsDTO);
 
-  const target = pools.find((pool) => pool.id == id);
+  const target = pools.find((pool) => pool._id == id);
 
   if (target == null) return;
   return target;
