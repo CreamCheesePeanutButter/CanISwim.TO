@@ -4,6 +4,6 @@ export interface BeachDTO {
   beachName: string;
   siteName: string;
   collectionDate: string;
-  eColi: string;
+  eColi: number;
   geometry: JSON;
 }

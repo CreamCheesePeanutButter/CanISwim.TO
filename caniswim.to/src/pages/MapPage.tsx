@@ -5,44 +5,67 @@ import "leaflet/dist/leaflet.css";
 import type { LatLngExpression } from "leaflet";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 
-//Import component
+// Import types & DTOs
 import type { SwimSafeProperties } from "../types/SwimSafeProperties";
+import type { PoolDTO } from "../DTOs/PoolDTO";
 import type { BeachDTO } from "../DTOs/BeachDTO";
+
+//Import components
 import { FacilityCard } from "../components/FacilitiyCard";
 import ShorelineMapHeader from "../components/MapHeader";
-
 interface SwimSafeMapProps {
   onSelectFeature: (properties: SwimSafeProperties) => void;
 }
 
+// Helper to safely parse stringified or object GeoJSON geometry
+function parseGeometry(rawGeometry: unknown): Geometry | null {
+  if (!rawGeometry) return null;
+  return typeof rawGeometry === "string"
+    ? (JSON.parse(rawGeometry) as Geometry)
+    : (rawGeometry as Geometry);
+}
+
 export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
+  const [pools, setPools] = useState<PoolDTO[]>([]);
   const [beaches, setBeaches] = useState<BeachDTO[]>([]);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Map variables (Zoom 11-12 frames Toronto's shoreline & pools well)
   const mapCenter: LatLngExpression = [43.68614, -79.48129];
-  const zoomLevel = 15;
+  const zoomLevel = 12;
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function fetchBeaches() {
+    async function fetchAllLocations() {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("http://localhost:3000/pools", {
-          signal: controller.signal,
-        });
+        // Fetch both endpoints in parallel
+        const [beachesRes, poolsRes] = await Promise.all([
+          fetch("http://localhost:3000/beaches", { signal: controller.signal }),
+          fetch("http://localhost:3000/pools", { signal: controller.signal }),
+        ]);
 
-        if (!response.ok) {
+        if (!beachesRes.ok) {
           throw new Error(
-            `Server error: ${response.status} ${response.statusText}`,
+            `Beaches error: ${beachesRes.status} ${beachesRes.statusText}`,
+          );
+        }
+        if (!poolsRes.ok) {
+          throw new Error(
+            `Pools error: ${poolsRes.status} ${poolsRes.statusText}`,
           );
         }
 
-        const data: BeachDTO[] = await response.json();
-        setBeaches(data);
+        const [beachesData, poolsData]: [BeachDTO[], PoolDTO[]] =
+          await Promise.all([beachesRes.json(), poolsRes.json()]);
+
+        setBeaches(beachesData);
+        setPools(poolsData);
       } catch (err) {
         if (err instanceof Error && err.name !== "AbortError") {
           setError(err.message);
@@ -52,37 +75,55 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
       }
     }
 
-    fetchBeaches();
+    fetchAllLocations();
     return () => controller.abort();
   }, []);
 
-  // Convert BeachDTO[] into a valid GeoJSON FeatureCollection for Leaflet
-  const geoJsonData = useMemo<FeatureCollection<Geometry, SwimSafeProperties>>(
-    () => ({
+  // Merge both Pools and Beaches into a single GeoJSON FeatureCollection
+  const geoJsonData = useMemo<
+    FeatureCollection<Geometry, SwimSafeProperties>
+  >(() => {
+    const poolFeatures: Feature<Geometry, SwimSafeProperties>[] = pools
+      .filter((pool) => Boolean(pool.geometry))
+      .map((pool) => {
+        const parsedGeometry = parseGeometry(pool.geometry)!;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { geometry: _geometry, ...properties } = pool;
+
+        return {
+          type: "Feature",
+          id: `pool-${pool.id}`,
+          geometry: parsedGeometry,
+          properties: {
+            ...properties,
+            category: "pool", // Helpful tag for FacilityCard rendering
+          } as unknown as SwimSafeProperties,
+        };
+      });
+
+    const beachFeatures: Feature<Geometry, SwimSafeProperties>[] = beaches
+      .filter((beach) => Boolean(beach.geometry))
+      .map((beach) => {
+        const parsedGeometry = parseGeometry(beach.geometry)!;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { geometry: _geometry, ...properties } = beach;
+
+        return {
+          type: "Feature",
+          id: `beach-${beach.id}`,
+          geometry: parsedGeometry,
+          properties: {
+            ...properties,
+            category: "beach", // Helpful tag for FacilityCard rendering
+          } as unknown as SwimSafeProperties,
+        };
+      });
+
+    return {
       type: "FeatureCollection",
-      features: beaches
-        .filter((beach) => Boolean(beach.geometry))
-        .map((beach) => {
-          // Parse geometry if Toronto Open Data returned it as a JSON string
-          const parsedGeometry: Geometry =
-            typeof beach.geometry === "string"
-              ? (JSON.parse(beach.geometry) as Geometry)
-              : (beach.geometry as unknown as Geometry);
-
-          // Separate geometry from the rest of the beach properties
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { geometry: _geometry, ...properties } = beach;
-
-          return {
-            type: "Feature",
-            id: beach.id,
-            geometry: parsedGeometry,
-            properties: properties as unknown as SwimSafeProperties,
-          };
-        }),
-    }),
-    [beaches],
-  );
+      features: [...poolFeatures, ...beachFeatures],
+    };
+  }, [pools, beaches]);
 
   const onEachFeature = (
     feature: Feature<Geometry, SwimSafeProperties>,
@@ -108,8 +149,8 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-inner border border-gray-200">
       {loading && (
-        <div className="absolute top-3 right-3 z-1000 bg-white/90 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 shadow">
-          Loading beaches...
+        <div className="absolute top-3 right-3 z- bg-white/90 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 shadow">
+          Loading pools & beaches...
         </div>
       )}
 
@@ -134,13 +175,14 @@ export default function SwimSafeMap({ onSelectFeature }: SwimSafeMapProps) {
     </div>
   );
 }
+
 // Layout Integration Wrapper
 export function MapPage() {
   const [selectedFacility, setSelectedFacility] =
     useState<SwimSafeProperties | null>(null);
 
   return (
-    <div className="flex gap-4 p-4 min-h-[100vh] bg-gray-50 antialiased">
+    <div className="flex gap-4 p-4 min-h-screen bg-gray-50 antialiased">
       {/* Sidebar Navigation */}
       <div className="w-1/4 bg-white p-4 flex flex-col gap-4 rounded-2xl border border-gray-200 shadow-sm">
         {/* Header Branding */}

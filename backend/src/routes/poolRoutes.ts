@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { listPools } from "../controllers/poolController.js";
+import { listLocations, listPools } from "../controllers/poolController.js";
 
 const router = Router();
 
 router.get("/", listPools);
+router.get("/locations", listLocations);
 
 export default router;
